@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using AutoBanners.Models;
 using AutoBanners.Services.Abstractions;
@@ -61,9 +62,13 @@ public class BannerService : IBannerService
                 "Created banner with message '{Message}'.",
                 banner.Message);
         }
+        else if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            _logger.LogError("Failed to create banner. The request was unauthorized. The Az token must have full access to the organization and must be from a user who is part of the Project Collection Administrators.");
+        }
         else
         {
-            _logger.LogInformation(
+            _logger.LogError(
                 "Failed to create banner. Azure DevOps response: {Response}",
                 await response.Content.ReadAsStreamAsync());
         }
