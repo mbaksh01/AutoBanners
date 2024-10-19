@@ -1,26 +1,33 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
-public class BannerService : IBannerService, IDisposable
+public class BannerService : IBannerService
 {
+    private readonly ILogger<BannerService> _logger;
+    private readonly IConfigurationService _configurationService;
     private readonly HttpClient _client;
-    private readonly Uri _baseAddress;
-    private readonly string _accessToken;
+    private Uri? _baseAddress;
+    private string _accessToken = string.Empty;
     
-    public BannerService(HttpClient client, Uri baseAddress, string accessToken)
+    public BannerService(
+        ILogger<BannerService> logger,
+        HttpClient client,
+        IConfigurationService configurationService)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
-        
+        _logger = logger;
         _client = client;
-        _baseAddress = baseAddress;
-        _accessToken = accessToken;
+        _configurationService = configurationService;
     }
     
     public async Task<string> CreateBannerAsync(Banner banner)
     {
+        await EnsureConfigurationIsLoadedAsync();
+        
         var title = $"GlobalMessageBanners/{banner.Priority}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
         var json = $$"""
                     {
@@ -33,7 +40,7 @@ public class BannerService : IBannerService, IDisposable
         
         var content = new StringContent(json, new MediaTypeHeaderValue("application/json"));
         var authHeader = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_accessToken}")));
-        var url = new Uri($"{_baseAddress.AbsoluteUri.TrimEnd('/')}/_apis/settings/entries/host/GlobalMessageBanners?api-version=3.2-preview");
+        var url = new Uri($"{_baseAddress!.AbsoluteUri.TrimEnd('/')}/_apis/settings/entries/host/GlobalMessageBanners?api-version=3.2-preview");
         
         HttpRequestMessage requestMessage = new()
         {
@@ -48,15 +55,28 @@ public class BannerService : IBannerService, IDisposable
 
         var response = await _client.SendAsync(requestMessage);
 
-        response.EnsureSuccessStatusCode();
+        if (response.IsSuccessStatusCode)
+        {
+            _logger.LogInformation(
+                "Created banner with message '{Message}'.",
+                banner.Message);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Failed to create banner. Azure DevOps response: {Response}",
+                await response.Content.ReadAsStreamAsync());
+        }
 
         return title;
     }
     
     public async Task DeleteBannerAsync(string title)
     {
+        await EnsureConfigurationIsLoadedAsync();
+        
         var authHeader = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_accessToken}")));
-        var url = new Uri($"{_baseAddress.AbsoluteUri.TrimEnd('/')}/_apis/settings/entries/host/{title}?api-version=3.2-preview");
+        var url = new Uri($"{_baseAddress!.AbsoluteUri.TrimEnd('/')}/_apis/settings/entries/host/{title}?api-version=3.2-preview");
         
         HttpRequestMessage requestMessage = new()
         {
@@ -70,7 +90,34 @@ public class BannerService : IBannerService, IDisposable
 
         var response = await _client.SendAsync(requestMessage);
 
-        response.EnsureSuccessStatusCode();
+        if (response.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("Deleted banner.");
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Failed to delete banner. Azure DevOps response: {Response}",
+                await response.Content.ReadAsStringAsync());
+        }
+    }
+    
+    private async Task EnsureConfigurationIsLoadedAsync()
+    {
+        if (_baseAddress is not null && !string.IsNullOrWhiteSpace(_accessToken))
+        {
+            return;
+        }
+
+        await _configurationService.LoadConfigurationAsync();
+
+        _baseAddress = _configurationService.Configuration?.AzBaseAddress;
+        _accessToken = _configurationService.Configuration?.AzAccessToken ?? string.Empty;
+        
+        if (_baseAddress is null || string.IsNullOrWhiteSpace(_accessToken))
+        {
+            throw new InvalidOperationException("Az base address and Az token could not be determined.");
+        }
     }
 
     public void Dispose()

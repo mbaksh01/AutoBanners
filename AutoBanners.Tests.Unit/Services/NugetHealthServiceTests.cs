@@ -2,6 +2,8 @@
 using AutoBanners.Models;
 using AutoBanners.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using RichardSzalay.MockHttp;
 
 namespace AutoBanners.Tests.Unit.Services;
@@ -29,7 +31,9 @@ public class NugetHealthServiceTests
             HealthEndpoint = new Uri(url)
         };
 
-        var healthService = new NugetHealthService(mockHandler.ToHttpClient());
+        var healthService = new NugetHealthService(
+            Substitute.For<ILogger<NugetHealthService>>(),
+            mockHandler.ToHttpClient());
 
         // Act
         var response = await healthService.GetHealthAsync(nugetConfiguration);
@@ -60,7 +64,9 @@ public class NugetHealthServiceTests
             HealthEndpoint = new Uri(url)
         };
 
-        var healthService = new NugetHealthService(mockHandler.ToHttpClient());
+        var healthService = new NugetHealthService(
+            Substitute.For<ILogger<NugetHealthService>>(),
+            mockHandler.ToHttpClient());
 
         // Act
         var response = await healthService.GetHealthAsync(nugetConfiguration);
@@ -87,7 +93,9 @@ public class NugetHealthServiceTests
             HealthEndpoint = new Uri(url)
         };
 
-        var healthService = new NugetHealthService(mockHandler.ToHttpClient());
+        var healthService = new NugetHealthService(
+            Substitute.For<ILogger<NugetHealthService>>(),
+            mockHandler.ToHttpClient());
 
         // Act
         var response = await healthService.GetHealthAsync(nugetConfiguration);

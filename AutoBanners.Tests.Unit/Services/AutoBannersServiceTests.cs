@@ -1,5 +1,7 @@
 ﻿using AutoBanners.Models;
 using AutoBanners.Services;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using RichardSzalay.MockHttp;
 
@@ -13,44 +15,46 @@ public class AutoBannersServiceTests
         // Arrange
         var unhealthyBannerMessage = "Azure DevOps Agent is unhealthy";
         
-        var configurationService = new ConfigurationService
-            {
-                Configuration = new Configuration
+        var configurationService = Substitute.For<IConfigurationService>();
+
+        configurationService.Configuration.Returns(new Configuration
+        {
+            HealthEndpoints =
+            [
+                new HealthEndpoint
                 {
-                    HealthEndpoints =
-                    [
-                        new HealthEndpoint
-                        {
-                            AzAgent = new AzureDevOpsConfiguration
-                            {
-                                BaseAddress = new Uri("https://dev.azure.com/health"),
-                                UnhealthyBannerMessage = unhealthyBannerMessage,
-                            }
-                        },
-                        new HealthEndpoint
-                        {
-                            Generic = new GenericConfiguration
-                            {
-                                HealthEndpoint = new Uri("https://myservice.example.com/health"),
-                            }
-                        },
-                        new HealthEndpoint
-                        {
-                            NuGet = new NugetConfiguration
-                            {
-                                HealthEndpoint = new Uri("https://nuget.example.com/health"),
-                            }
-                        },
-                        new HealthEndpoint
-                        {
-                            Portainer = new PortainerConfiguration
-                            {
-                                BaseAddress = new Uri("https://portainer.example.com/health"),
-                            }
-                        },
-                    ]
-                }
-            };
+                    AzAgent = new AzureDevOpsConfiguration
+                    {
+                        BaseAddress = new Uri("https://dev.azure.com/health"),
+                        UnhealthyBannerMessage = unhealthyBannerMessage,
+                    }
+                },
+                new HealthEndpoint
+                {
+                    Generic = new GenericConfiguration
+                    {
+                        HealthEndpoint =
+                            new Uri("https://myservice.example.com/health"),
+                    }
+                },
+                new HealthEndpoint
+                {
+                    NuGet = new NugetConfiguration
+                    {
+                        HealthEndpoint =
+                            new Uri("https://nuget.example.com/health"),
+                    }
+                },
+                new HealthEndpoint
+                {
+                    Portainer = new PortainerConfiguration
+                    {
+                        BaseAddress =
+                            new Uri("https://portainer.example.com/health"),
+                    }
+                },
+            ]
+        });
 
         var httpClient = new MockHttpMessageHandler().ToHttpClient();
         var healthServiceFactory = Substitute.For<IHealthServiceFactory>();
@@ -83,6 +87,7 @@ public class AutoBannersServiceTests
         var bannerService = Substitute.For<IBannerService>();
         
         var autoBannersService = new AutoBannersService(
+            Substitute.For<ILogger<AutoBannersService>>(),
             bannerService,
             configurationService,
             httpClient,

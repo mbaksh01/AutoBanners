@@ -2,6 +2,8 @@
 using AutoBanners.Models;
 using AutoBanners.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using RichardSzalay.MockHttp;
 
 namespace AutoBanners.Tests.Unit.Services;
@@ -21,7 +23,9 @@ public class PortainerHealthServiceTests
             .When(HttpMethod.Get, $"{url}/api/endpoints/{environmentId}/docker/containers/{containerName}/json")
             .Respond("application/json", "{\"State\": {\"Health\": {\"Status\": \"healthy\"}}}");
 
-        var healthService = new PortainerHealthService(mockHandler.ToHttpClient());
+        var healthService = new PortainerHealthService(
+            Substitute.For<ILogger<PortainerHealthService>>(),
+            mockHandler.ToHttpClient());
 
         var config = new PortainerConfiguration
         {
@@ -50,7 +54,9 @@ public class PortainerHealthServiceTests
             .When(HttpMethod.Get, $"{url}/api/endpoints/{environmentId}/docker/containers/{containerName}/json")
             .Respond(HttpStatusCode.ServiceUnavailable);
 
-        var healthService = new PortainerHealthService(mockHandler.ToHttpClient());
+        var healthService = new PortainerHealthService(
+            Substitute.For<ILogger<PortainerHealthService>>(),
+            mockHandler.ToHttpClient());
 
         var config = new PortainerConfiguration
         {
@@ -79,7 +85,9 @@ public class PortainerHealthServiceTests
             .When(HttpMethod.Get, $"{url}/api/endpoints/{environmentId}/docker/containers/{containerName}/json")
             .Respond("application/json", "{\"State\": {\"Health\": {\"Status\": \"unhealthy\"}}}");
 
-        var healthService = new PortainerHealthService(mockHandler.ToHttpClient());
+        var healthService = new PortainerHealthService(
+            Substitute.For<ILogger<PortainerHealthService>>(),
+            mockHandler.ToHttpClient());
 
         var config = new PortainerConfiguration
         {

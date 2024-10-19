@@ -2,11 +2,13 @@
 using AutoBanners.Models;
 using AutoBanners.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using RichardSzalay.MockHttp;
 
 namespace AutoBanners.Tests.Unit.Services;
 
-public class AzureDevOpsAgentHealthServiceTests
+public class AdoAgentHealthServiceTests
 {
     [Fact]
     public async Task GetHealthAsync_Should_Return_Healthy()
@@ -21,7 +23,7 @@ public class AzureDevOpsAgentHealthServiceTests
             .When(HttpMethod.Get, $"{url}/_apis/distributedtask/pools/{poolId}/agents?api-version=3.2-preview&agentName={agentName}")
             .Respond("application/json", "{\"value\": [{\"Status\": \"online\"}]}");
 
-        var healthService = new AzureDevOpsAgentHealthService(mockHandler.ToHttpClient());
+        var healthService = new AdoAgentHealthService(Substitute.For<ILogger<AdoAgentHealthService>>(), mockHandler.ToHttpClient());
 
         var config = new AzureDevOpsConfiguration
         {
@@ -51,7 +53,7 @@ public class AzureDevOpsAgentHealthServiceTests
             .When(HttpMethod.Get, $"{url}/_apis/distributedtask/pools/{poolId}/agents?api-version=3.2-preview&agentName={agentName}")
             .Respond("application/json", "{\"value\": [{\"Status\": \"offline\"}]}");
 
-        var healthService = new AzureDevOpsAgentHealthService(mockHandler.ToHttpClient());
+        var healthService = new AdoAgentHealthService(Substitute.For<ILogger<AdoAgentHealthService>>(), mockHandler.ToHttpClient());
 
         var config = new AzureDevOpsConfiguration
         {
@@ -81,7 +83,7 @@ public class AzureDevOpsAgentHealthServiceTests
             .When(HttpMethod.Get, $"{url}/_apis/distributedtask/pools/{poolId}/agents?api-version=3.2-preview&agentName={agentName}")
             .Respond(HttpStatusCode.ServiceUnavailable);
 
-        var healthService = new AzureDevOpsAgentHealthService(mockHandler.ToHttpClient());
+        var healthService = new AdoAgentHealthService(Substitute.For<ILogger<AdoAgentHealthService>>(), mockHandler.ToHttpClient());
 
         var config = new AzureDevOpsConfiguration
         {

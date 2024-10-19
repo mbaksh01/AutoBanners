@@ -2,6 +2,8 @@
 using AutoBanners.Models;
 using AutoBanners.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 
 namespace AutoBanners.Tests.Unit.Services;
 
@@ -65,7 +67,7 @@ public class ConfigurationServiceTests
 
         configuration.AzAccessToken = "my-token";
         
-        var configurationService = new ConfigurationService();
+        var configurationService = new ConfigurationService(Substitute.For<ILogger<ConfigurationService>>());
 
         // Act
         await configurationService.LoadConfigurationAsync();

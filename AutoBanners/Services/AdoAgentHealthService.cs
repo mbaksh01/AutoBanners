@@ -3,19 +3,19 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
-public class AzureDevOpsAgentHealthService : IHealthService<AzureDevOpsConfiguration>
+public class AdoAgentHealthService : HealthServiceBase, IHealthService<AzureDevOpsConfiguration>
 {
-    private readonly HttpClient _client;
+    protected override string ServiceName => "Azure DevOps";
     
-    public AzureDevOpsAgentHealthService(HttpClient client)
-    {
-        _client = client;
-    }
+    public AdoAgentHealthService(ILogger<AdoAgentHealthService> logger, HttpClient client)
+        : base(logger, client) { }
     
-    public async Task<HealthStatus> GetHealthAsync(AzureDevOpsConfiguration configuration)
+    public Task<HealthStatus> GetHealthAsync(AzureDevOpsConfiguration configuration)
     {
         var authHeader = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($":{configuration.AccessToken}")));
         var url = new Uri($"{configuration.BaseAddress.AbsoluteUri.TrimEnd('/')}/_apis/distributedtask/pools/{configuration.PoolId}/agents?api-version=3.2-preview&agentName={configuration.AgentName}");
@@ -30,18 +30,14 @@ public class AzureDevOpsAgentHealthService : IHealthService<AzureDevOpsConfigura
             }
         };
 
-        var response = await _client.SendAsync(requestMessage);
-
-        if (!response.IsSuccessStatusCode)
+        return CheckHealthAsync(requestMessage, async response =>
         {
-            return HealthStatus.Unhealthy;
-        }
+            var agentHealth = await response.Content.ReadFromJsonAsync<AgentHealthResponse>();
 
-        var agentHealth = await response.Content.ReadFromJsonAsync<AgentHealthResponse>();
-
-        return agentHealth?.Agents.FirstOrDefault()?.Status == "online"
-            ? HealthStatus.Healthy
-            : HealthStatus.Unhealthy;
+            return agentHealth?.Agents.FirstOrDefault()?.Status == "online"
+                ? HealthStatus.Healthy
+                : HealthStatus.Unhealthy;
+        });
     }
 }
 

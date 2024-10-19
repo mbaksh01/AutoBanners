@@ -3,6 +3,8 @@ using AutoBanners.Models;
 using AutoBanners.Services;
 using RichardSzalay.MockHttp;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 
 namespace AutoBanners.Tests.Unit.Services;
 
@@ -14,13 +16,15 @@ public class GenericHealthServiceTests
         // Arrange
         var mockHandler = new MockHttpMessageHandler();
         
-        string url = "https://example.com/health";
+        var url = "https://example.com/health";
 
         var mockedRequest = mockHandler
             .When(HttpMethod.Get, url)
             .Respond(HttpStatusCode.OK);
         
-        var genericHealthService = new GenericHealthService(mockHandler.ToHttpClient());
+        var genericHealthService = new GenericHealthService(
+            Substitute.For<ILogger<GenericHealthService>>(),
+            mockHandler.ToHttpClient());
 
         var configuration = new GenericConfiguration()
         {
@@ -47,7 +51,9 @@ public class GenericHealthServiceTests
             .When(HttpMethod.Get, url)
             .Respond(HttpStatusCode.ServiceUnavailable);
         
-        var genericHealthService = new GenericHealthService(mockHandler.ToHttpClient());
+        var genericHealthService = new GenericHealthService(
+            Substitute.For<ILogger<GenericHealthService>>(),
+            mockHandler.ToHttpClient());
 
         var configuration = new GenericConfiguration()
         {
@@ -72,11 +78,13 @@ public class GenericHealthServiceTests
 
         var mockedRequest = mockHandler
             .When(HttpMethod.Get, url)
-            .Throw(new Exception());
+            .Throw(new HttpRequestException());
         
-        var genericHealthService = new GenericHealthService(mockHandler.ToHttpClient());
+        var genericHealthService = new GenericHealthService(
+            Substitute.For<ILogger<GenericHealthService>>(),
+            mockHandler.ToHttpClient());
 
-        var configuration = new GenericConfiguration()
+        var configuration = new GenericConfiguration
         {
             HealthEndpoint = new Uri(url)
         };
@@ -85,7 +93,7 @@ public class GenericHealthServiceTests
         var response = await genericHealthService.GetHealthAsync(configuration);
         
         // Assert
-        response.Should().Be(HealthStatus.Unhealthy);
+        response.Should().Be(HealthStatus.Unknown);
         mockHandler.GetMatchCount(mockedRequest).Should().Be(1);
     }
 }

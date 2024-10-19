@@ -1,20 +1,26 @@
 ﻿using AutoBanners.Services;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
-var configurationService = new ConfigurationService();
+var services = new ServiceCollection();
 
-await configurationService.LoadConfigurationAsync();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
 
-if (configurationService.Configuration is null)
+services.AddSingleton<IConfigurationService, ConfigurationService>();
+services.AddSingleton<IBannerService, BannerService>();
+services.AddSingleton<IHealthServiceFactory, HealthServiceFactory>();
+services.AddSingleton<HttpClient>();
+services.AddSingleton<AutoBannersService>();
+services.AddLogging(builder =>
 {
-    throw new Exception("Configuration could not be loaded.");
-}
+    builder.ClearProviders();
+    builder.AddSerilog();
+});
 
-var bannerService = new BannerService(
-    new HttpClient(),
-    configurationService.Configuration.AzBaseAddress,
-    configurationService.Configuration.AzAccessToken);
+var serviceProvider = services.BuildServiceProvider();
 
-var client = new HttpClient();
-var healthServiceFactory = new HealthServiceFactory();
-
-await new AutoBannersService(bannerService, configurationService, client, healthServiceFactory).RunAsync();
+await serviceProvider.GetRequiredService<AutoBannersService>().RunAsync();

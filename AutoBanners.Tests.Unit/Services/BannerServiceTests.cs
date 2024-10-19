@@ -1,7 +1,10 @@
 ﻿using System.Net;
 using AutoBanners.Models;
 using AutoBanners.Services;
+using AutoBanners.Services.Abstractions;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using RichardSzalay.MockHttp;
 
 namespace AutoBanners.Tests.Unit.Services;
@@ -18,7 +21,18 @@ public class BannerServiceTests
             .When(HttpMethod.Patch, "https://dev.azure.com/_apis/settings/entries/host/GlobalMessageBanners?api-version=3.2-preview")
             .Respond(HttpStatusCode.NoContent);
         
-        var bannerService = new BannerService(handler.ToHttpClient(), new Uri("https://dev.azure.com"), "token");
+        var configurationService = Substitute.For<IConfigurationService>();
+
+        configurationService.Configuration.Returns(new Configuration
+        {
+            AzBaseAddress = new Uri("https://dev.azure.com"),
+            AzAccessToken = "my-token"
+        });
+        
+        var bannerService = new BannerService(
+            Substitute.For<ILogger<BannerService>>(),
+            handler.ToHttpClient(),
+            configurationService);
 
         var banner = new Banner
         {
@@ -49,7 +63,18 @@ public class BannerServiceTests
             .When(HttpMethod.Delete, $"https://dev.azure.com/_apis/settings/entries/host/{title}?api-version=3.2-preview")
             .Respond(HttpStatusCode.NoContent);
         
-        var bannerService = new BannerService(handler.ToHttpClient(), new Uri("https://dev.azure.com"), "token");
+        var configurationService = Substitute.For<IConfigurationService>();
+
+        configurationService.Configuration.Returns(new Configuration
+        {
+            AzBaseAddress = new Uri("https://dev.azure.com"),
+            AzAccessToken = "my-token"
+        });
+        
+        var bannerService = new BannerService(
+            Substitute.For<ILogger<BannerService>>(),
+            handler.ToHttpClient(),
+            configurationService);
 
         // Act
         await bannerService.DeleteBannerAsync(title);

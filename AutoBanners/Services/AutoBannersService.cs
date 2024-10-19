@@ -1,21 +1,26 @@
 ﻿using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
 public class AutoBannersService
 {
+    private readonly ILogger<AutoBannersService> _logger;
     private readonly IBannerService _bannerService;
     private readonly IHealthServiceFactory _healthServiceFactory;
-    private readonly ConfigurationService _configurationService;
+    private readonly IConfigurationService _configurationService;
     private readonly HttpClient _client;
     private readonly Dictionary<Guid, string> _activeBanners = [];
 
     public AutoBannersService(
+        ILogger<AutoBannersService> logger,
         IBannerService bannerService,
-        ConfigurationService configurationService,
+        IConfigurationService configurationService,
         HttpClient client,
         IHealthServiceFactory healthServiceFactory)
     {
+        _logger = logger;
         _bannerService = bannerService;
         _configurationService = configurationService;
         _client = client;
@@ -30,6 +35,8 @@ public class AutoBannersService
         {
             throw new Exception("Configuration file has not been loaded.");
         }
+        
+        _logger.LogInformation("Starting health endpoint monitoring.");
         
         while (!cancellationToken.IsCancellationRequested)
         {

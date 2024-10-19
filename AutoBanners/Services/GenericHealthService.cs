@@ -1,27 +1,23 @@
 ﻿using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
-public class GenericHealthService : IHealthService<GenericConfiguration>
+public class GenericHealthService : HealthServiceBase, IHealthService<GenericConfiguration>
 {
-    private readonly HttpClient _client;
-    
-    public GenericHealthService(HttpClient client)
-    {
-        _client = client;
-    }
-    
-    public async Task<HealthStatus> GetHealthAsync(GenericConfiguration configuration)
-    {
-        try
-        {
-            var response = await _client.GetAsync(configuration.HealthEndpoint);
+    protected override string ServiceName => "Generic Health Service";
 
-            return response.IsSuccessStatusCode ? HealthStatus.Healthy : HealthStatus.Unhealthy;
-        }
-        catch
+    public GenericHealthService(ILogger<GenericHealthService> logger, HttpClient client)
+        : base(logger, client) { }
+    
+    public Task<HealthStatus> GetHealthAsync(GenericConfiguration configuration)
+    {
+        return CheckHealthAsync(configuration.HealthEndpoint, response =>
         {
-            return HealthStatus.Unhealthy;
-        }
+            var status = response.IsSuccessStatusCode ? HealthStatus.Healthy : HealthStatus.Unhealthy;
+
+            return Task.FromResult(status);
+        });
     }
 }

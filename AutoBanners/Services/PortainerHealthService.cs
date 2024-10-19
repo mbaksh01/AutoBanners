@@ -1,18 +1,19 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json;
 using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
-public class PortainerHealthService : IHealthService<PortainerConfiguration>
+public class PortainerHealthService : HealthServiceBase, IHealthService<PortainerConfiguration>
 {
-    private readonly HttpClient _client;
+    protected override string ServiceName => "Portainer";
+    
+    public PortainerHealthService(ILogger<PortainerHealthService> logger, HttpClient client)
+        : base(logger, client) { }
 
-    public PortainerHealthService(HttpClient client)
-    {
-        _client = client;
-    }
-
-    public async Task<HealthStatus> GetHealthAsync(PortainerConfiguration configuration)
+    public Task<HealthStatus> GetHealthAsync(PortainerConfiguration configuration)
     {
         var request = new HttpRequestMessage
         {
@@ -24,21 +25,15 @@ public class PortainerHealthService : IHealthService<PortainerConfiguration>
             RequestUri = new Uri($"{configuration.BaseAddress.AbsoluteUri.TrimEnd('/')}/api/endpoints/{configuration.EnvironmentId}/docker/containers/{configuration.ContainerName}/json")
         };
 
-        var response = await _client.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
+        return CheckHealthAsync(request, async response =>
         {
-            return HealthStatus.Unhealthy;
-        }
+            var containerInfo =
+                await response.Content.ReadFromJsonAsync<ContainerInfo>();
 
-        var containerInfo = await response.Content.ReadFromJsonAsync<ContainerInfo>();
-
-        if (containerInfo?.State.Health.Status == "healthy")
-        {
-            return HealthStatus.Healthy;
-        }
-        
-        return HealthStatus.Unhealthy;
+            return containerInfo?.State.Health.Status == "healthy"
+                ? HealthStatus.Healthy
+                : HealthStatus.Unhealthy;
+        });
     }
 }
 

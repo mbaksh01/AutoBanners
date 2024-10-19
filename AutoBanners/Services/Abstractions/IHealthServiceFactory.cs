@@ -1,4 +1,4 @@
-﻿namespace AutoBanners.Services;
+﻿namespace AutoBanners.Services.Abstractions;
 
 public interface IHealthServiceFactory
 {

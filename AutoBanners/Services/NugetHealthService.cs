@@ -1,31 +1,28 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json;
 using AutoBanners.Models;
+using AutoBanners.Services.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace AutoBanners.Services;
 
-public class NugetHealthService : IHealthService<NugetConfiguration>
+public class NugetHealthService : HealthServiceBase, IHealthService<NugetConfiguration>
 {
-    private readonly HttpClient _client;
+    protected override string ServiceName => "Nuget";
     
-    public NugetHealthService(HttpClient client)
-    {
-        _client = client;
-    }
+    public NugetHealthService(ILogger<NugetHealthService> logger, HttpClient client)
+        : base(logger, client) { }
     
-    public async Task<HealthStatus> GetHealthAsync(NugetConfiguration configuration)
+    public Task<HealthStatus> GetHealthAsync(NugetConfiguration configuration)
     {
-        var response = await _client.GetAsync(configuration.HealthEndpoint);
-
-        if (!response.IsSuccessStatusCode)
+        return CheckHealthAsync(configuration.HealthEndpoint, async response =>
         {
-            return HealthStatus.Unhealthy;
-        }
-        
-        var healthResponse = await response.Content.ReadFromJsonAsync<NugetHealthResponse>();
+            var healthResponse = await response.Content.ReadFromJsonAsync<NugetHealthResponse>();
 
-        return healthResponse?.Status == "Healthy"
-            ? HealthStatus.Healthy
-            : HealthStatus.Unhealthy;
+            return healthResponse?.Status == "Healthy"
+                ? HealthStatus.Healthy
+                : HealthStatus.Unhealthy;
+        });
     }
 }
 

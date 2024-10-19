@@ -3,5 +3,6 @@
 public enum HealthStatus
 {
     Healthy,
-    Unhealthy
+    Unhealthy,
+    Unknown
 }

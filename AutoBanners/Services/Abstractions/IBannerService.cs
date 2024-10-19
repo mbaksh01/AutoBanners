@@ -1,10 +1,9 @@
 ﻿using AutoBanners.Models;
 
-namespace AutoBanners.Services;
+namespace AutoBanners.Services.Abstractions;
 
-public interface IBannerService
+public interface IBannerService : IDisposable
 {
     Task<string> CreateBannerAsync(Banner banner);
     Task DeleteBannerAsync(string title);
-    void Dispose();
 }

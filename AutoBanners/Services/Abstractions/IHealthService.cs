@@ -1,6 +1,6 @@
 ﻿using AutoBanners.Models;
 
-namespace AutoBanners.Services;
+namespace AutoBanners.Services.Abstractions;
 
 public interface IHealthService<in TConfiguration>
     where TConfiguration : class

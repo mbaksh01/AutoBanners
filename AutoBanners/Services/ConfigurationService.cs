@@ -1,16 +1,25 @@
 ﻿using System.Text.Json;
 using AutoBanners.Models;
+using Microsoft.Extensions.Logging;
+using AutoBanners.Services.Abstractions;
 
 namespace AutoBanners.Services;
 
-public class ConfigurationService
+public class ConfigurationService : IConfigurationService
 {
+    private readonly ILogger<ConfigurationService> _logger;
+    
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
     
     public Configuration? Configuration { get; set; }
+    
+    public ConfigurationService(ILogger<ConfigurationService> logger)
+    {
+        _logger = logger;
+    }
     
     public Task LoadConfigurationAsync()
     {
@@ -21,6 +30,7 @@ public class ConfigurationService
         
         var file = File.Open("Configuration/Configuration.json", FileMode.Open);
 
+        
         var configurations = JsonSerializer.Deserialize<Configuration>(file, JsonSerializerOptions);
 
         if (configurations is not null)
@@ -34,6 +44,7 @@ public class ConfigurationService
 
         if (!string.IsNullOrWhiteSpace(Configuration.AzAccessToken))
         {
+            DisplayLoadedMessage();
             return Task.CompletedTask;
         }
         
@@ -46,6 +57,14 @@ public class ConfigurationService
             
         Configuration.AzAccessToken = accessToken;
 
+        DisplayLoadedMessage();
         return Task.CompletedTask;
+    }
+
+    private void DisplayLoadedMessage()
+    {
+        _logger.LogInformation(
+            "Successfully loaded {HealthEndpointCount} health endpoint(s).",
+            Configuration!.HealthEndpoints.Count);
     }
 }
