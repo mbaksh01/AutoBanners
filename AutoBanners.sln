@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoBanners", "AutoBanners\AutoBanners.csproj", "{B997C1D9-7165-403D-B052-5A4D2E6D5947}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoBanners.Tests.Unit", "AutoBanners.Tests.Unit\AutoBanners.Tests.Unit.csproj", "{CF2BC356-F2FA-4676-AD04-31291CF74E8E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B997C1D9-7165-403D-B052-5A4D2E6D5947}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B997C1D9-7165-403D-B052-5A4D2E6D5947}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B997C1D9-7165-403D-B052-5A4D2E6D5947}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B997C1D9-7165-403D-B052-5A4D2E6D5947}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF2BC356-F2FA-4676-AD04-31291CF74E8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF2BC356-F2FA-4676-AD04-31291CF74E8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF2BC356-F2FA-4676-AD04-31291CF74E8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF2BC356-F2FA-4676-AD04-31291CF74E8E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
