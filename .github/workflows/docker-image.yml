@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Test Application
-      run: dotnet test
+      run: dotnet test -c Release
     
     - name: Build Docker Image
       run: docker build --file AutoBanners/Dockerfile --tag ghcr.io/mbaksh01/auto-banners:latest .
