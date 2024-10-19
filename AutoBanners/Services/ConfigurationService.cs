@@ -29,7 +29,6 @@ public class ConfigurationService : IConfigurationService
         }
         
         var file = File.Open("Configuration/Configuration.json", FileMode.Open);
-
         
         var configurations = JsonSerializer.Deserialize<Configuration>(file, JsonSerializerOptions);
 
@@ -42,20 +41,27 @@ public class ConfigurationService : IConfigurationService
             throw new Exception("Could not load the configuration file.");
         }
 
-        if (!string.IsNullOrWhiteSpace(Configuration.AzAccessToken))
-        {
-            DisplayLoadedMessage();
-            return Task.CompletedTask;
-        }
+        var accessToken = Configuration.AzAccessToken;
         
-        var accessToken = Environment.GetEnvironmentVariable("AZ_ACCESS_TOKEN");
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            accessToken = Environment.GetEnvironmentVariable("AZ_ACCESS_TOKEN");
+        }
 
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             throw new Exception("Could not determine the Az Access Token. Set the AZ_ACCESS_TOKEN environment variable or provide its value through the configuration file.");
         }
-            
+
         Configuration.AzAccessToken = accessToken;
+
+        foreach (var healthEndpoint in Configuration.HealthEndpoints)
+        {
+            if (healthEndpoint.AzAgent is not null && string.IsNullOrWhiteSpace(healthEndpoint.AzAgent.AccessToken))
+            {
+                healthEndpoint.AzAgent.AccessToken = accessToken;
+            }
+        }
 
         DisplayLoadedMessage();
         return Task.CompletedTask;
