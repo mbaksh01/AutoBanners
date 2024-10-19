@@ -104,6 +104,7 @@ public class AutoBannersService
             if (_activeBanners.TryGetValue(configuration.Id, out string? title))
             {
                 await _bannerService.DeleteBannerAsync(title);
+                _activeBanners.Remove(configuration.Id);
             }
         }
     }
