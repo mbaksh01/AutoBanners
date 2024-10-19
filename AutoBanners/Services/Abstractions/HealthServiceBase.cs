@@ -58,9 +58,8 @@ public abstract class HealthServiceBase
             {
                 _logger.LogWarning(
                     ex,
-                    "The response from {ServiceName} could not be deserialized. Response: {Response}",
-                    ServiceName,
-                    await response.Content.ReadAsStringAsync());
+                    "The response from {ServiceName} could not be deserialized.",
+                    ServiceName);
             
                 return HealthStatus.Unknown;
             }
