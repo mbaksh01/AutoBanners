@@ -23,6 +23,7 @@ public class ConfigurationServiceTests
                     AzAgent = new AzureDevOpsConfiguration
                     {
                         BaseAddress = new Uri("https://dev.azure.com/health"),
+                        AccessToken = "hello-world",
                     }
                 },
                 new HealthEndpoint

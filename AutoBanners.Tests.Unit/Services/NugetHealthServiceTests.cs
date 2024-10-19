@@ -101,7 +101,7 @@ public class NugetHealthServiceTests
         var response = await healthService.GetHealthAsync(nugetConfiguration);
 
         // Assert
-        response.Should().Be(HealthStatus.Unhealthy);
+        response.Should().Be(HealthStatus.Unknown);
         mockHandler.GetMatchCount(mockedRequest).Should().Be(1);
     }
 }

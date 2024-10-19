@@ -50,6 +50,11 @@ public abstract class HealthServiceBase
                 return HealthStatus.Unknown;
             }
 
+            if (response.StatusCode is HttpStatusCode.InternalServerError or HttpStatusCode.ServiceUnavailable)
+            {
+                return HealthStatus.Unhealthy;
+            }
+
             try
             {
                 return await predicate.Invoke(response);
