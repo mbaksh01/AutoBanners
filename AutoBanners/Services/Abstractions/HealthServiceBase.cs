@@ -41,16 +41,18 @@ public abstract class HealthServiceBase
         {
             var response = await _client.SendAsync(request);
 
-            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            if (response.StatusCode is HttpStatusCode.Unauthorized
+                or HttpStatusCode.Forbidden)
             {
                 _logger.LogWarning(
                     "The request to {HealthEndpoint} was unauthorized. The authentication method may no longer be valid.",
                     request.RequestUri);
-                
+
                 return HealthStatus.Unknown;
             }
 
-            if (response.StatusCode is HttpStatusCode.InternalServerError or HttpStatusCode.ServiceUnavailable)
+            if (response.StatusCode is HttpStatusCode.InternalServerError
+                or HttpStatusCode.ServiceUnavailable)
             {
                 return HealthStatus.Unhealthy;
             }
@@ -65,7 +67,7 @@ public abstract class HealthServiceBase
                     ex,
                     "The response from {ServiceName} could not be deserialized.",
                     ServiceName);
-            
+
                 return HealthStatus.Unknown;
             }
         }
@@ -75,8 +77,14 @@ public abstract class HealthServiceBase
                 ex,
                 "Could not connect to {ServiceName}.",
                 ServiceName);
-            
+
             return HealthStatus.Unknown;
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogWarning(ex, "The request to {ServiceName} timed out.", ServiceName);
+
+            return HealthStatus.Unhealthy;
         }
     }
 }
